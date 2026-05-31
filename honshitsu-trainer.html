@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>本質思考トレーナー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1814; --ink2: #4a4740; --ink3: #8a8680;
+  --paper: #f5f2eb; --paper2: #edeae0; --paper3: #e2dfd4;
+  --accent: #c84b2f;
+  --score-high: #2d6a4f; --score-mid: #b5851a; --score-low: #c84b2f;
+  --serif: 'Noto Serif JP', serif;
+  --sans: 'Zen Kaku Gothic New', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --header-h: 52px; --input-h: 110px;
+}
+html, body { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+
+/* HEADER */
+header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: var(--paper); border-bottom: 1px solid var(--paper3);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100;
+}
+header h1 { font-family: var(--serif); font-size: 17px; font-weight: 700; letter-spacing: 0.04em; }
+.header-btns { display: flex; gap: 8px; }
+.hbtn {
+  background: none; border: 1px solid var(--paper3); border-radius: 20px;
+  padding: 5px 12px; font-family: var(--mono); font-size: 10px; color: var(--ink3);
+  cursor: pointer; letter-spacing: 0.06em; -webkit-tap-highlight-color: transparent;
+}
+.hbtn:active { background: var(--paper2); }
+
+/* CHAT AREA */
+.chat-area {
+  position: fixed; top: var(--header-h); bottom: var(--input-h); left: 0; right: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 8px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* EMPTY STATE */
+.empty-state { margin: auto; text-align: center; color: var(--ink3); padding: 32px 20px; }
+.empty-state .big { font-family: var(--serif); font-size: 48px; margin-bottom: 16px; opacity: 0.2; }
+.empty-state p { font-size: 13px; line-height: 2; }
+
+/* MESSAGES */
+.msg { display: flex; flex-direction: column; gap: 3px; animation: fadeUp 0.25s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.msg-role { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); padding-left: 2px; }
+.msg.user .msg-role { color: var(--accent); text-align: right; padding-right: 2px; }
+.msg-body {
+  background: var(--paper2); border: 1px solid var(--paper3); border-radius: 10px;
+  padding: 12px 14px; font-size: 14px; line-height: 1.8; white-space: pre-wrap;
+}
+.msg.user .msg-body { background: #fdf5f3; border-color: #e8c4bb; align-self: flex-end; max-width: 88%; border-radius: 10px 4px 10px 10px; }
+.msg.ai .msg-body { align-self: flex-start; border-radius: 4px 10px 10px 10px; }
+
+/* PROBLEM CARD */
+.problem-card {
+  background: var(--paper); border: 1.5px solid var(--accent);
+  border-radius: 10px; padding: 14px 16px;
+  align-self: stretch; animation: fadeUp 0.25s ease;
+}
+.problem-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 8px;
+}
+.problem-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.problem-type-label {
+  font-family: var(--mono); font-size: 10px; color: white;
+  background: var(--accent); border-radius: 4px; padding: 2px 7px;
+  letter-spacing: 0.06em; margin-bottom: 8px; display: inline-block;
+}
+.problem-text { font-size: 14px; line-height: 1.9; color: var(--ink); }
+.problem-hint { font-size: 12px; color: var(--ink3); margin-top: 8px; line-height: 1.6; border-top: 1px solid var(--paper3); padding-top: 8px; }
+
+/* SCORE BLOCK */
+.score-block {
+  background: var(--paper); border: 1px solid var(--paper3); border-radius: 10px;
+  padding: 14px 16px; align-self: flex-start; width: 100%; animation: fadeUp 0.25s ease;
+}
+.score-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.score-row { padding: 8px 0; border-bottom: 1px solid var(--paper3); }
+.score-row:last-of-type { border-bottom: none; }
+.score-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.score-name { font-weight: 700; font-size: 12px; width: 72px; flex-shrink: 0; }
+.score-bar { flex: 1; height: 5px; border-radius: 3px; background: var(--paper3); overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+.score-num { font-family: var(--mono); font-size: 11px; width: 24px; text-align: right; flex-shrink: 0; }
+.score-comment { font-size: 12px; color: var(--ink2); line-height: 1.5; padding-left: 80px; }
+.score-total { margin-top: 10px; padding-top: 10px; border-top: 1.5px solid var(--ink); display: flex; align-items: baseline; gap: 6px; }
+.score-total-label { font-size: 11px; color: var(--ink3); }
+.score-total-num { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+.score-total-max { font-size: 11px; color: var(--ink3); }
+
+/* LOADING */
+.loading { display: flex; gap: 5px; padding: 12px 16px; background: var(--paper2); border: 1px solid var(--paper3); border-radius: 4px 10px 10px 10px; align-self: flex-start; }
+.dot { width: 6px; height: 6px; background: var(--ink3); border-radius: 50%; animation: blink 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity:0.2; } 40% { opacity:1; } }
+
+/* INPUT AREA */
+.input-area {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--input-h);
+  background: var(--paper); border-top: 1px solid var(--paper3);
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 100;
+}
+.q-pills { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px; }
+.q-pills::-webkit-scrollbar { display: none; }
+.q-pill {
+  flex-shrink: 0; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid var(--paper3); background: var(--paper2);
+  font-family: var(--mono); font-size: 11px; color: var(--ink2);
+  cursor: pointer; letter-spacing: 0.04em; transition: all 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.q-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+textarea {
+  flex: 1; background: var(--paper2); border: 1px solid var(--paper3); border-radius: 8px;
+  padding: 10px 12px; font-family: var(--sans); font-size: 16px; color: var(--ink);
+  resize: none; outline: none; height: 46px; line-height: 1.5;
+  -webkit-appearance: none; transition: border-color 0.15s;
+}
+textarea:focus { border-color: var(--accent); }
+textarea::placeholder { color: var(--ink3); }
+.send-btn {
+  background: var(--accent); color: white; border: none; border-radius: 8px;
+  width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; transition: background 0.12s;
+}
+.send-btn:active { background: #a83b22; }
+.send-btn:disabled { background: var(--paper3); }
+.send-btn svg { width: 20px; height: 20px; fill: white; }
+
+/* GUIDE SHEET */
+.sheet-overlay { position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.sheet-overlay.open { opacity: 1; pointer-events: auto; }
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0; background: var(--paper);
+  border-radius: 16px 16px 0 0; z-index: 201;
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  max-height: 80vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.sheet.open { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--paper3); border-radius: 2px; margin: 12px auto 0; }
+.sheet-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); padding: 14px 20px 10px; border-bottom: 1px solid var(--paper3); }
+.sheet-section { padding: 16px 20px; border-bottom: 1px solid var(--paper3); }
+.sheet-section:last-child { border-bottom: none; }
+.sheet-section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.q-card { background: var(--paper2); border: 1px solid var(--paper3); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+.q-card:last-child { margin-bottom: 0; }
+.q-card-label { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 3px; }
+.q-card-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.criteria-list { list-style: none; }
+.criteria-list li { font-size: 13px; color: var(--ink2); padding: 7px 0; border-bottom: 1px solid var(--paper3); display: flex; gap: 10px; line-height: 1.5; }
+.criteria-list li:last-child { border-bottom: none; }
+.criteria-num { font-family: var(--mono); color: var(--accent); font-size: 11px; flex-shrink: 0; padding-top: 1px; }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--paper3); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>本質思考トレーナー</h1>
+  <div class="header-btns">
+    <button class="hbtn" onclick="generateProblem()">問題</button>
+    <button class="hbtn" onclick="openGuide()">ガイド</button>
+  </div>
+</header>
+
+<div class="chat-area" id="chatArea">
+  <div class="empty-state" id="emptyState">
+    <div class="big">問</div>
+    <p>「問題」ボタンで練習問題を出題。<br>または自分で仮説を入力して<br>AIに採点してもらおう。<br><br>下のピルで問いの種類を選択。</p>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="q-pills">
+    <div class="q-pill active" data-q="原因">原因</div>
+    <div class="q-pill" data-q="目的">目的</div>
+    <div class="q-pill" data-q="特性">特性</div>
+    <div class="q-pill" data-q="価値">価値</div>
+    <div class="q-pill" data-q="関係">関係</div>
+  </div>
+  <div class="input-row">
+    <textarea id="userInput" placeholder="本質の仮説を入力…"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeGuide()"></div>
+<div class="sheet" id="guideSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">ガイド</div>
+  <div class="sheet-section">
+    <div class="sheet-section-label">問いの型</div>
+    <div class="q-card"><div class="q-card-label">原因</div><div class="q-card-text">「なぜ？」を繰り返す。これを起こしている一番根っこは何か？</div></div>
+    <div class="q-card"><div class="q-card-label">目的</div><div class="q-card-text">「何のために？」を繰り返す。これがなくなった時、何が困るか？</div></div>
+    <div class="q-card"><div class="q-card-label">特性</div><div class="q-card-text">背後に働く力学を探す。他のものと何が違うか？なぜ機能するのか？</div></div>
+    <div class="q-card"><div class="q-card-label">価値</div><div class="q-card-text">「これで誰の何が変わるか？」を問う。有益性・意義・重要性の3側面で。</div></div>
+    <div class="q-card"><div class="q-card-label">関係</div><div class="q-card-text">抽象化した時どんな構造になるか。これが変わると何が変わる？逆は？</div></div>
+  </div>
+  <div class="sheet-section">
+    <div class="sheet-section-label">採点基準（各5点）</div>
+    <ul class="criteria-list">
+      <li><span class="criteria-num">①</span><span>それがなければ成り立たない <b>根本性</b></span></li>
+      <li><span class="criteria-num">②</span><span>相手が「必要だ」と感じる <b>必要性</b></span></li>
+      <li><span class="criteria-num">③</span><span>余計な枝葉のない <b>シンプル性</b></span></li>
+      <li><span class="criteria-num">④</span><span>時・場所を超えた <b>普遍性</b></span></li>
+      <li><span class="criteria-num">⑤</span><span>全体の働きを決める <b>全体規定性</b></span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const QUESTION_HINTS = {
+  '原因': '原因 ── 「これを起こしている一番根っこは何か？」',
+  '目的': '目的 ── 「これがなくなった時、何が困るか？」',
+  '特性': '特性 ── 「背後に働く力学は何か？」',
+  '価値': '価値 ── 「誰の何が変わるか？」',
+  '関係': '関係 ── 「抽象化するとどんな構造か？」'
+};
+
+const PROBLEM_PROMPTS = {
+  '原因': `あなたは「本質的な原因」を鍛える練習問題を1問作成してください。
+問題の形式：日常的な現象・出来事を1つ提示し、「なぜそれが起きるのか？なぜを3回以上繰り返して根本原因を掘り下げてください」と問う。
+例のテイスト：身近で意外性があり、考えれば考えるほど深くなるテーマ。例「なぜSNSでは感情的な投稿ほど拡散されやすいのか？」
+ヒントとして「表面的な答えで止まらず、その答えにもまた『なぜ？』を問い続けてください」を添える。
+必ずJSON形式のみで返す：{"type":"原因","problem":"問題文","hint":"考えるヒント"}`,
+
+  '目的': `あなたは「本質的な目的」を鍛える練習問題を1問作成してください。
+問題の形式：ある行動・制度・慣習を1つ提示し、「何のためにそれは存在するのか？目的を3段階掘り下げてください」と問う。
+例のテイスト：当たり前すぎて誰も疑わないが、問い直すと本質が見える。例「会社の朝礼は何のために存在するのか？」
+ヒントとして「直接的な目的（表）→その目的が実現する目的（中）→それが叶う本質的意義（奥）の順で考えてみてください」を添える。
+必ずJSON形式のみで返す：{"type":"目的","problem":"問題文","hint":"考えるヒント"}`,
+
+  '特性': `あなたは「本質的な特性」を鍛える練習問題を1問作成してください。
+問題の形式：あるモノ・人・現象を1つ提示し、「それを成り立たせている背後の力学・性質を3つ言語化してください」と問う。
+例のテイスト：知っているようで言語化できないもの。例「お笑いのツッコミはなぜ機能するのか。その背後にある力学を3つ見つけてください」
+ヒントとして「表面的な特徴ではなく、それが機能している理由・メカニズムを探してください」を添える。
+必ずJSON形式のみで返す：{"type":"特性","problem":"問題文","hint":"考えるヒント"}`,
+
+  '価値': `あなたは「本質的な価値」を鍛える練習問題を1問作成してください。
+問題の形式：同じモノ・サービス・行為を提示し、「立場の異なる3人にとっての価値をそれぞれ言語化してください」と問う。
+例のテイスト：立場によって価値がまるで変わるもの。例「図書館は司書・学生・地域の高齢者それぞれにとってどんな価値があるか？有益性・意義・重要性の観点で考えてください」
+ヒントとして「同じ事実でも、誰にとっての価値かで本質が変わります。有益性（役立つか）・意義（意味あるか）・重要性（どれほど大きいか）の3つで整理してみてください」を添える。
+必ずJSON形式のみで返す：{"type":"価値","problem":"問題文","hint":"考えるヒント"}`,
+
+  '関係': `あなたは「関係の本質」を鍛える練習問題を1問作成してください。
+問題の形式：一見まったく無関係な2つのものを提示し、「構造的・本質的な共通点を3つ見つけてください」と問う。
+例のテイスト：「政治家と扇風機」のように、意外な組み合わせで抽象化の思考を刺激するもの。
+ヒントとして「表面的な特徴ではなく、両者が持つ構造・役割・力学の共通点を探してください」を添える。
+必ずJSON形式のみで返す：{"type":"関係","problem":"問題文","hint":"考えるヒント"}`
+};
+
+const SCORE_SYSTEM = `あなたは「本質思考」のトレーニングコーチです。
+ユーザーが提示した回答に対して、以下の5つの採点基準で採点し、フィードバックと代替案を返してください。
+
+【問いの種類】: QTYPE（QHINT）
+
+【採点基準】（各1〜5点）
+1. 根本性：それがなければ成り立たないか
+2. 必要性：相手が「必要だ」と感じる要素か
+3. シンプル性：余計な枝葉を取り除いた純粋な状態か
+4. 普遍性：時・場所・状況を超えて通用するか
+5. 全体規定性：全体の働きを決定づけているか
+
+必ず以下のJSON形式のみで返答してください：
+{"scores":[{"name":"根本性","score":数値,"comment":"理由30字以内"},{"name":"必要性","score":数値,"comment":"理由30字以内"},{"name":"シンプル性","score":数値,"comment":"理由30字以内"},{"name":"普遍性","score":数値,"comment":"理由30字以内"},{"name":"全体規定性","score":数値,"comment":"理由30字以内"}],"feedback":"弱かった点を中心に改善方向100字程度","alternative":"より本質に近い表現の例を1〜2文"}`;
+
+let currentQ = '原因';
+let history = [];
+let currentProblem = null;
+
+// ピル選択
+document.querySelectorAll('.q-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.q-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    currentQ = pill.dataset.q;
+  });
+});
+
+document.getElementById('userInput').addEventListener('focus', () => {
+  setTimeout(() => { const a = document.getElementById('chatArea'); a.scrollTop = a.scrollHeight; }, 350);
+});
+
+function openGuide() { document.getElementById('sheetOverlay').classList.add('open'); document.getElementById('guideSheet').classList.add('open'); }
+function closeGuide() { document.getElementById('sheetOverlay').classList.remove('open'); document.getElementById('guideSheet').classList.remove('open'); }
+
+function clearEmpty() { const e = document.getElementById('emptyState'); if (e) e.remove(); }
+
+function addMessage(role, text) {
+  clearEmpty();
+  const area = document.getElementById('chatArea');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+  msg.innerHTML = `<div class="msg-role">${role === 'user' ? 'あなた' : 'AI'}</div><div class="msg-body">${escHtml(text)}</div>`;
+  area.appendChild(msg);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addLoading() {
+  clearEmpty();
+  const area = document.getElementById('chatArea');
+  const el = document.createElement('div');
+  el.className = 'loading'; el.id = 'loadingEl';
+  el.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+function removeLoading() { const e = document.getElementById('loadingEl'); if (e) e.remove(); }
+
+function getScoreColor(s) { return s >= 4 ? 'var(--score-high)' : s >= 3 ? 'var(--score-mid)' : 'var(--score-low)'; }
+
+function renderScoreBlock(data) {
+  const area = document.getElementById('chatArea');
+  const block = document.createElement('div');
+  block.className = 'score-block';
+  const total = data.scores.reduce((s, r) => s + r.score, 0);
+  const rows = data.scores.map(r => {
+    const pct = (r.score / 5) * 100;
+    const color = getScoreColor(r.score);
+    return `<div class="score-row">
+      <div class="score-row-top">
+        <div class="score-name">${r.name}</div>
+        <div class="score-bar"><div class="score-fill" style="width:0%;background:${color}" data-width="${pct}%"></div></div>
+        <div class="score-num" style="color:${color}">${r.score}/5</div>
+      </div>
+      <div class="score-comment">${escHtml(r.comment)}</div>
+    </div>`;
+  }).join('');
+  const tc = total >= 20 ? 'var(--score-high)' : total >= 14 ? 'var(--score-mid)' : 'var(--score-low)';
+  block.innerHTML = `<div class="score-title">採点結果</div>${rows}
+    <div class="score-total"><span class="score-total-label">総合</span><span class="score-total-num" style="color:${tc}">${total}</span><span class="score-total-max">/ 25</span></div>`;
+  area.appendChild(block);
+  if (data.feedback || data.alternative) {
+    const fb = document.createElement('div');
+    fb.className = 'msg ai';
+    let txt = data.feedback || '';
+    if (data.alternative) txt += '\n\n【より本質に近い表現の例】\n' + data.alternative;
+    fb.innerHTML = `<div class="msg-role">AI</div><div class="msg-body">${escHtml(txt)}</div>`;
+    area.appendChild(fb);
+  }
+  area.scrollTop = area.scrollHeight;
+  setTimeout(() => { block.querySelectorAll('.score-fill').forEach(el => { el.style.width = el.dataset.width; }); }, 100);
+}
+
+function renderProblemCard(data) {
+  clearEmpty();
+  const area = document.getElementById('chatArea');
+  const card = document.createElement('div');
+  card.className = 'problem-card';
+  card.innerHTML = `
+    <div class="problem-tag"><div class="problem-tag-dot"></div>練習問題</div>
+    <div class="problem-type-label">${data.type}</div>
+    <div class="problem-text">${escHtml(data.problem)}</div>
+    <div class="problem-hint">💡 ${escHtml(data.hint)}</div>`;
+  area.appendChild(card);
+  area.scrollTop = area.scrollHeight;
+  currentProblem = data;
+  // ピルを問題の種類に合わせる
+  document.querySelectorAll('.q-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.q === data.type);
+  });
+  currentQ = data.type;
+  document.getElementById('userInput').placeholder = `「${data.type}」の観点で答えを入力…`;
+  document.getElementById('userInput').focus();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 問題生成
+async function generateProblem() {
+  addLoading();
+  const prompt = PROBLEM_PROMPTS[currentQ];
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    removeLoading();
+    const raw = data.content?.map(b => b.text || '').join('');
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { addMessage('ai', '問題の生成に失敗しました。もう一度お試しください。'); return; }
+    renderProblemCard(parsed);
+    history = []; // 問題が変わったら履歴リセット
+  } catch(err) {
+    removeLoading();
+    addMessage('ai', 'エラー：' + err.message);
+  }
+}
+
+// 回答送信・採点
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  input.value = '';
+
+  addMessage('user', text);
+  history.push({ role: 'user', content: text });
+  addLoading();
+
+  // 問題がある場合はその文脈を含める
+  const problemContext = currentProblem
+    ? `【出題された問題】\n${currentProblem.problem}\n\n`
+    : '';
+
+  const system = SCORE_SYSTEM
+    .replace('QTYPE', currentQ)
+    .replace('QHINT', QUESTION_HINTS[currentQ]);
+
+  try {
+    const msgs = currentProblem && history.length === 1
+      ? [{ role: 'user', content: problemContext + '【ユーザーの回答】\n' + text }]
+      : history;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system,
+        messages: msgs
+      })
+    });
+    const data = await res.json();
+    removeLoading();
+    const raw = data.content?.map(b => b.text || '').join('');
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { addMessage('ai', raw || 'エラーが発生しました。'); history.push({ role:'assistant', content: raw }); btn.disabled=false; return; }
+    history.push({ role: 'assistant', content: raw });
+    renderScoreBlock(parsed);
+  } catch(err) {
+    removeLoading();
+    addMessage('ai', 'エラー：' + err.message);
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
